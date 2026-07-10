@@ -1,0 +1,530 @@
+{
+  "info": {
+    "name": "KPI System — demo",
+    "description": "Сквозной сценарий: справочники → правила → расчёт → расчётный лист.\nЗапускать запросы в порядке папок (1 → 2 → 3 → 4 → 5 → 6).\nID сохраняются автоматически через Collection Variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",    "value": "http://localhost:8000" },
+    { "key": "dept_id",     "value": "" },
+    { "key": "role_id",     "value": "" },
+    { "key": "emp1_id",     "value": "" },
+    { "key": "emp2_id",     "value": "" },
+    { "key": "emp3_id",     "value": "" },
+    { "key": "metric_id",   "value": "" },
+    { "key": "template_id", "value": "" },
+    { "key": "scheme_id",   "value": "" },
+    { "key": "version_id",  "value": "" },
+    { "key": "period_id",   "value": "" }
+  ],
+  "item": [
+    {
+      "name": "0. Health check",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('status ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+              ]}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Справочники",
+      "item": [
+        {
+          "name": "POST /departments — Отдел продаж",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/departments",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Отдел продаж\",\n  \"code\": \"SALES_PM\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.collectionVariables.set('dept_id', j.id);",
+                "pm.test('dept created', () => pm.expect(j.id).to.be.a('number'));"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "POST /roles — Менеджер",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/roles",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Менеджер продаж\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.collectionVariables.set('role_id', j.id);",
+                "pm.test('role created', () => pm.expect(j.id).to.be.a('number'));"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "POST /employees — Иванов (80% плана)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/employees",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"personnel_no\": \"PM001\",\n  \"last_name\": \"Иванов\",\n  \"first_name\": \"Иван\",\n  \"department_id\": {{dept_id}},\n  \"role_id\": {{role_id}},\n  \"hired_at\": \"2022-01-01\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.collectionVariables.set('emp1_id', j.id);",
+                "pm.test('emp1 created', () => pm.expect(j.id).to.be.a('number'));"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "POST /employees — Петрова (105% плана)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/employees",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"personnel_no\": \"PM002\",\n  \"last_name\": \"Петрова\",\n  \"first_name\": \"Мария\",\n  \"department_id\": {{dept_id}},\n  \"role_id\": {{role_id}},\n  \"hired_at\": \"2022-01-01\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.collectionVariables.set('emp2_id', j.id);"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "POST /employees — Сидоров (130% плана)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/employees",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"personnel_no\": \"PM003\",\n  \"last_name\": \"Сидоров\",\n  \"first_name\": \"Алексей\",\n  \"department_id\": {{dept_id}},\n  \"role_id\": {{role_id}},\n  \"hired_at\": \"2022-01-01\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.collectionVariables.set('emp3_id', j.id);"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "GET /employees — проверить список",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/employees"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('3 employees', () => pm.expect(pm.response.json().length).to.be.at.least(3));"
+              ]}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Правила",
+      "item": [
+        {
+          "name": "POST /metrics — Объём сборов",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/metrics",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"sales_vol_pm\",\n  \"name\": \"Объём сборов\",\n  \"unit\": \"руб.\",\n  \"data_type\": \"numeric\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.collectionVariables.set('metric_id', j.id);",
+                "pm.test('metric created', () => pm.expect(j.id).to.be.a('number'));"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "POST /templates",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/templates",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Менеджер продаж — базовый\",\n  \"metric_ids\": [{{metric_id}}]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.collectionVariables.set('template_id', j.id);"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "POST /schemes",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/schemes",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Мотивация менеджеров\",\n  \"template_id\": {{template_id}},\n  \"department_id\": {{dept_id}}\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.collectionVariables.set('scheme_id', j.id);"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "POST /schemes/{{scheme_id}}/versions — черновик",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/schemes/{{scheme_id}}/versions",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"effective_from\": \"2024-01-01\",\n  \"config\": {\n    \"components\": [\n      {\n        \"metric\": \"sales_vol_pm\",\n        \"plan\": 1000000,\n        \"base_rate\": 30000,\n        \"weight\": 1.0,\n        \"scale\": [\n          { \"from\": 0.0,  \"to\": 0.8,  \"coefficient\": 0.0 },\n          { \"from\": 0.8,  \"to\": 1.0,  \"coefficient\": 0.5 },\n          { \"from\": 1.0,  \"to\": 1.2,  \"coefficient\": 1.0 },\n          { \"from\": 1.2,  \"to\": 9.99, \"coefficient\": 1.3 }\n        ]\n      }\n    ],\n    \"modifiers\": [\n      { \"type\": \"bonus\", \"code\": \"no_complaints\", \"amount\": 5000 }\n    ],\n    \"limits\": { \"min\": 0, \"max\": 100000 }\n  }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.collectionVariables.set('version_id', j.id);",
+                "pm.test('draft created', () => pm.expect(j.status).to.eql('draft'));"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "POST /versions/{{version_id}}/publish",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/versions/{{version_id}}/publish",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"effective_from\": \"2024-01-01\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('published', () => pm.expect(pm.response.json().status).to.eql('published'));"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "PATCH /versions/{{version_id}}/params — изменить план (роль head)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/versions/{{version_id}}/params",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer head:manager" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patches\": {}\n}"
+            }
+          },
+          "_postman_notes": "Пример для роли head. Чтобы реально изменить параметр — нужно добавить поле 'editable' в конфиг версии при создании черновика, тогда можно патчить: {\"patches\": {\"components.0.plan\": 900000}}"
+        }
+      ]
+    },
+    {
+      "name": "3. Период и показатели",
+      "item": [
+        {
+          "name": "POST /periods — январь 2024",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/periods",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"month\",\n  \"date_start\": \"2024-01-01\",\n  \"date_end\": \"2024-01-31\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.collectionVariables.set('period_id', j.id);",
+                "pm.test('period created', () => pm.expect(j.id).to.be.a('number'));"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "POST /metric-values — Иванов (800 000 = 80% плана)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/metric-values",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_id\": {{emp1_id}},\n  \"metric_id\":   {{metric_id}},\n  \"period_id\":   {{period_id}},\n  \"value\":       800000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('201', () => pm.expect(pm.response.code).to.eql(201));"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "POST /metric-values — Петрова (1 050 000 = 105% плана)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/metric-values",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_id\": {{emp2_id}},\n  \"metric_id\":   {{metric_id}},\n  \"period_id\":   {{period_id}},\n  \"value\":       1050000\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /metric-values — Сидоров (1 300 000 = 130% плана)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/metric-values",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employee_id\": {{emp3_id}},\n  \"metric_id\":   {{metric_id}},\n  \"period_id\":   {{period_id}},\n  \"value\":       1300000\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /metric-values?period_id={{period_id}} — проверить",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/metric-values?period_id={{period_id}}",
+              "query": [{ "key": "period_id", "value": "{{period_id}}" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('3 values', () => pm.expect(pm.response.json().length).to.eql(3));"
+              ]}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Расчёт",
+      "item": [
+        {
+          "name": "POST /calculations/{{period_id}}/run",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/calculations/{{period_id}}/run"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.test('calculated = 3', () => pm.expect(j.calculated).to.eql(3));",
+                "console.log('Calculated:', j.calculated, 'employees');"
+              ]}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Расчётные листы",
+      "item": [
+        {
+          "name": "GET /payslips/{{emp1_id}} — Иванов (ожидание: 20 000)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/payslips/{{emp1_id}}?period_id={{period_id}}",
+              "query": [{ "key": "period_id", "value": "{{period_id}}" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.test('total = 20000', () => pm.expect(parseFloat(j.total_amount)).to.eql(20000));",
+                "pm.test('2 steps', () => pm.expect(j.steps.length).to.eql(2));",
+                "console.log('Иванов ИТОГО:', j.total_amount);"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "GET /payslips/{{emp2_id}} — Петрова (ожидание: 35 000)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/payslips/{{emp2_id}}?period_id={{period_id}}",
+              "query": [{ "key": "period_id", "value": "{{period_id}}" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.test('total = 35000', () => pm.expect(parseFloat(j.total_amount)).to.eql(35000));",
+                "console.log('Петрова ИТОГО:', j.total_amount);"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "GET /payslips/{{emp3_id}} — Сидоров (ожидание: 44 000)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/payslips/{{emp3_id}}?period_id={{period_id}}",
+              "query": [{ "key": "period_id", "value": "{{period_id}}" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "const j = pm.response.json();",
+                "pm.test('total = 44000', () => pm.expect(parseFloat(j.total_amount)).to.eql(44000));",
+                "console.log('Сидоров ИТОГО:', j.total_amount);"
+              ]}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Администрирование",
+      "item": [
+        {
+          "name": "GET /admin/audit (требует роль admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/audit",
+            "header": [
+              { "key": "Authorization", "value": "Bearer admin:alice" }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('200 for admin', () => pm.expect(pm.response.code).to.eql(200));"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/audit — без токена (должен вернуть 401)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/audit"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('401 without token', () => pm.expect(pm.response.code).to.eql(401));"
+              ]}
+            }
+          ]
+        },
+        {
+          "name": "GET /admin/audit — с ролью employee (должен вернуть 403)",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/audit",
+            "header": [
+              { "key": "Authorization", "value": "Bearer employee:user" }
+            ]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "exec": [
+                "pm.test('403 for employee', () => pm.expect(pm.response.code).to.eql(403));"
+              ]}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
